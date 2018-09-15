@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/riomhaire/jrpcserver/model"
-	"github.com/riomhaire/jrpcserver/usecases"
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
@@ -19,17 +18,20 @@ import (
 )
 
 var dispatcher *Dispatcher
+var apiconfig *APIConfig
 
 type APIConfig struct {
 	ServiceName string
 	BaseURI     string
 	Port        int
 	Commands    []model.JRPCCommand
+	Version     func() string
 }
 
 func StartAPI(config APIConfig) {
 	// Create dispatcher for later use
 	dispatcher = NewDispatcher(config.Commands)
+	apiconfig = &config
 
 	router := mux.NewRouter()
 	// add middleware for a specific route and get params from route
@@ -55,7 +57,7 @@ func StartAPI(config APIConfig) {
 	// Add Server Metrics
 	negroni.Use(negroniprometheus.NewMiddleware(config.ServiceName))
 
-	log.Println("Starting JSON RPC Server Version", usecases.Version(), config.BaseURI, "on port:", config.Port)
+	log.Println("Starting JSON RPC Server Version", config.Version(), config.BaseURI, "on port:", config.Port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", config.Port), negroni))
 
 }
@@ -111,7 +113,7 @@ func AddWorkerHeader(rw http.ResponseWriter, req *http.Request, next http.Handle
 
 // AddWorkerVersion - adds header of which version is installed
 func AddWorkerVersion(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
-	version := usecases.Version()
+	version := apiconfig.Version()
 	if len(version) == 0 {
 		version = "UNKNOWN"
 	}

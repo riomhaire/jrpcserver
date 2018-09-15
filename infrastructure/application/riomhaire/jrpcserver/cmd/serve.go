@@ -35,6 +35,7 @@ var serveCmd = &cobra.Command{
 			BaseURI:     "/api/v1/jrpc",
 			Port:        port,
 			Commands:    usecases.InitializeCommands(),
+			Version:     usecases.Version,
 		}
 
 		rpc.StartAPI(config) // Wont return
