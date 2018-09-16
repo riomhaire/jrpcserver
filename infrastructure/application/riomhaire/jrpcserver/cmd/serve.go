@@ -36,6 +36,8 @@ var serveCmd = &cobra.Command{
 			Port:        port,
 			Commands:    usecases.InitializeCommands(),
 			Version:     usecases.Version,
+			Consul:      cmd.Flag("consul").Value.String(),
+			Hostname:    cmd.Flag("host").Value.String(),
 		}
 
 		rpc.StartAPI(config) // Wont return
@@ -51,6 +53,8 @@ func init() {
 	// and all subcommands, e.g.:
 	rootCmd.PersistentFlags().IntP("port", "p", 3000, "Port to run on")
 	rootCmd.PersistentFlags().StringP("servicename", "s", "jrpcserver", "Name of service")
+	rootCmd.PersistentFlags().StringP("consul", "c", "", "Consul host. Empty means dont use")
+	rootCmd.PersistentFlags().StringP("host", "b", "", "Interface/hostname to bind to")
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// serveCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")

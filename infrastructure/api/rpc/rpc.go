@@ -6,8 +6,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
+	"github.com/riomhaire/jrpcserver/infrastructure/serviceregistry"
+	"github.com/riomhaire/jrpcserver/infrastructure/serviceregistry/consulagent"
+	"github.com/riomhaire/jrpcserver/infrastructure/serviceregistry/none"
 	"github.com/riomhaire/jrpcserver/model"
 
 	"github.com/gorilla/mux"
@@ -26,13 +31,30 @@ type APIConfig struct {
 	Port        int
 	Commands    []model.JRPCCommand
 	Version     func() string
+	Hostname    string // Which host service is bound to - if blank defaults to os.Hostname(), used for consul connection
+	Consul      string // where consul host is located. If blank no consul integration made: its host and port
 }
 
 func StartAPI(config APIConfig) {
 	// Create dispatcher for later use
 	dispatcher = NewDispatcher(config.Commands)
+	consulEnabled := len(config.Consul) != 0
+	if len(config.Hostname) == 0 {
+		n, _ := os.Hostname()
+		config.Hostname = n
+	}
 	apiconfig = &config
 
+	// Set up registry
+	var registryConnector serviceregistry.ServiceRegistry // Default to none
+	if consulEnabled {
+		registryConnector = consulagent.NewConsulServiceRegistry(config.Consul, config.ServiceName, config.Hostname, config.Port, config.BaseURI, "/health")
+	} else {
+		registryConnector = none.NewDefaultServiceRegistry() // Default to none
+
+	}
+
+	// Define endpoint
 	router := mux.NewRouter()
 	// add middleware for a specific route and get params from route
 	router.HandleFunc(fmt.Sprintf("%s/{method}", config.BaseURI), rpcHandler)
@@ -58,6 +80,21 @@ func StartAPI(config APIConfig) {
 	negroni.Use(negroniprometheus.NewMiddleware(config.ServiceName))
 
 	log.Println("Starting JSON RPC Server Version", config.Version(), config.BaseURI, "on port:", config.Port)
+
+	// Set up shutdown resister
+	c := make(chan os.Signal, 2)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+
+	// Set up a way to cleanly shutdown / deregister
+	go func() {
+		<-c
+		registryConnector.Deregister()
+		log.Println("Shutting Down")
+		os.Exit(0)
+	}()
+
+	// Register (if required with consul or other registry)
+	registryConnector.Register()
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", config.Port), negroni))
 
 }
