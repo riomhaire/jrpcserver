@@ -30,7 +30,7 @@ type APIConfig struct {
 	BaseURI     string
 	Port        int
 	Commands    []model.JRPCCommand
-	Version     func() string
+	Version     string
 	Hostname    string // Which host service is bound to - if blank defaults to os.Hostname(), used for consul connection
 	Consul      string // where consul host is located. If blank no consul integration made: its host and port
 }
@@ -79,7 +79,7 @@ func StartAPI(config APIConfig) {
 	// Add Server Metrics
 	negroni.Use(negroniprometheus.NewMiddleware(config.ServiceName))
 
-	log.Println("Starting JSON RPC Server Version", config.Version(), config.BaseURI, "on port:", config.Port)
+	log.Println("Starting JSON RPC Server Version", config.Version, config.BaseURI, "on port:", config.Port)
 
 	// Set up shutdown resister
 	c := make(chan os.Signal, 2)
@@ -150,11 +150,10 @@ func AddWorkerHeader(rw http.ResponseWriter, req *http.Request, next http.Handle
 
 // AddWorkerVersion - adds header of which version is installed
 func AddWorkerVersion(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
-	version := apiconfig.Version()
-	if len(version) == 0 {
-		version = "UNKNOWN"
+	if len(apiconfig.Version) == 0 {
+		apiconfig.Version = "UNKNOWN"
 	}
-	rw.Header().Add("X-Worker-Version", version)
+	rw.Header().Add("X-Worker-Version", apiconfig.Version)
 	if next != nil {
 		next(rw, req)
 	}

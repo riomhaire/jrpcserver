@@ -35,7 +35,7 @@ var serveCmd = &cobra.Command{
 			BaseURI:     "/api/v1/jrpc",
 			Port:        port,
 			Commands:    usecases.InitializeCommands(),
-			Version:     usecases.Version,
+			Version:     usecases.Version(),
 			Consul:      cmd.Flag("consul").Value.String(),
 			Hostname:    cmd.Flag("host").Value.String(),
 		}
