@@ -8,5 +8,5 @@ import (
 
 type JRPCCommand struct {
 	Name    string
-	Command func(map[string]string, io.ReadCloser) (interface{}, jrpcerror.JrpcError)
+	Command func(APIConfig, map[string]string, io.ReadCloser) (interface{}, jrpcerror.JrpcError)
 }

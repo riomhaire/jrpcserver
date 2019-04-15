@@ -4,6 +4,9 @@ Content-Type: text/plain
 fred
 
 ###
+POST http://localhost:9999/api/v1/helloworld/system.commands
+
+###
 GET http://localhost:9999/metrics
 
 ###

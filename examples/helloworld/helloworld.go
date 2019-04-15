@@ -9,6 +9,7 @@ import (
 	"github.com/riomhaire/jrpcserver/infrastructure/api/rpc"
 	"github.com/riomhaire/jrpcserver/model"
 	"github.com/riomhaire/jrpcserver/model/jrpcerror"
+	"github.com/riomhaire/jrpcserver/usecases"
 )
 
 // A simple example 'helloworld' program to show how use the framework
@@ -24,7 +25,7 @@ func main() {
 	port := flag.Int("port", 9999, "port to use")
 	flag.Parse()
 
-	config := rpc.APIConfig{
+	config := model.APIConfig{
 		ServiceName: *name,
 		BaseURI:     *path,
 		Port:        *port,
@@ -38,10 +39,11 @@ func Commands() []model.JRPCCommand {
 	commands := make([]model.JRPCCommand, 0)
 
 	commands = append(commands, model.JRPCCommand{"example.helloworld", HelloWorldCommand})
+	commands = append(commands, model.JRPCCommand{"system.commands", usecases.ListCommandsCommand})
 	return commands
 }
 
-func HelloWorldCommand(metadata map[string]string, payload io.ReadCloser) (interface{}, jrpcerror.JrpcError) {
+func HelloWorldCommand(config model.APIConfig, metadata map[string]string, payload io.ReadCloser) (interface{}, jrpcerror.JrpcError) {
 	data, err := ioutil.ReadAll(payload)
 	if err != nil {
 		return "", jrpcerror.JrpcError{500, err.Error()}

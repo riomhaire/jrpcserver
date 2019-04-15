@@ -18,6 +18,7 @@ import (
 	"strconv"
 
 	"github.com/riomhaire/jrpcserver/infrastructure/api/rpc"
+	"github.com/riomhaire/jrpcserver/model"
 	"github.com/riomhaire/jrpcserver/usecases"
 
 	"github.com/spf13/cobra"
@@ -30,9 +31,9 @@ var serveCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		port, _ := strconv.Atoi(cmd.Flag("port").Value.String())
 
-		config := rpc.APIConfig{
+		config := model.APIConfig{
 			ServiceName: cmd.Flag("servicename").Value.String(),
-			BaseURI:     "/api/v1/jrpc",
+			BaseURI:     "/api/v1/rpc",
 			Port:        port,
 			Commands:    usecases.InitializeCommands(),
 			Version:     usecases.Version(),

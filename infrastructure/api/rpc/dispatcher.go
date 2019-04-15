@@ -7,21 +7,21 @@ import (
 )
 
 type Dispatcher struct {
-	Commands []model.JRPCCommand
+	config model.APIConfig
 }
 
-func NewDispatcher(commandList []model.JRPCCommand) *Dispatcher {
-	return &Dispatcher{Commands: commandList}
+func NewDispatcher(config model.APIConfig) *Dispatcher {
+	return &Dispatcher{config}
 
 }
 
 func (d *Dispatcher) Execute(method string, headers map[string]string, payload io.ReadCloser) *model.RPCCommandResponse {
 	response := model.RPCCommandResponse{}
 	found := false
-	for _, cmd := range d.Commands {
+	for _, cmd := range d.config.Commands {
 		if cmd.Name == method {
 			found = true
-			result, err := cmd.Command(headers, payload)
+			result, err := cmd.Command(d.config, headers, payload)
 			if err.Code != 0 {
 				response.Code = err.Code
 				response.Error = err.Error

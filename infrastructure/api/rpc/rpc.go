@@ -23,21 +23,11 @@ import (
 )
 
 var dispatcher *Dispatcher
-var apiconfig *APIConfig
+var apiconfig *model.APIConfig
 
-type APIConfig struct {
-	ServiceName string
-	BaseURI     string
-	Port        int
-	Commands    []model.JRPCCommand
-	Version     string
-	Hostname    string // Which host service is bound to - if blank defaults to os.Hostname(), used for consul connection
-	Consul      string // where consul host is located. If blank no consul integration made: its host and port
-}
-
-func StartAPI(config APIConfig) {
+func StartAPI(config model.APIConfig) {
 	// Create dispatcher for later use
-	dispatcher = NewDispatcher(config.Commands)
+	dispatcher = NewDispatcher(config)
 	consulEnabled := len(config.Consul) != 0
 	if len(config.Hostname) == 0 {
 		n, _ := os.Hostname()
@@ -102,6 +92,7 @@ func StartAPI(config APIConfig) {
 func rpcHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	method := vars["method"]
+	defer r.Body.Close()
 
 	// Get Headers
 	headers := make(map[string]string)
