@@ -1,4 +1,4 @@
-package usecases
+package defaultcommand
 
 import (
 	"encoding/json"

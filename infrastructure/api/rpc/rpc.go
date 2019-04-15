@@ -106,8 +106,15 @@ func rpcHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Make the call
 	dipatcherResponse := dispatcher.Execute(method, headers, r.Body)
+	var b []byte
 
-	b, _ := json.MarshalIndent(dipatcherResponse, "", "  ")
+	if dipatcherResponse.RawResponse { // non command response
+		b, _ = json.MarshalIndent(dipatcherResponse.Value, "", "  ")
+
+	} else { // Encode a command response
+		b, _ = json.MarshalIndent(dipatcherResponse, "", "  ")
+
+	}
 	w.Header().Set("Content-Type", "application/json")
 	if dipatcherResponse.Code == 0 {
 		w.WriteHeader(http.StatusOK)

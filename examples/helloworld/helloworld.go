@@ -9,7 +9,7 @@ import (
 	"github.com/riomhaire/jrpcserver/infrastructure/api/rpc"
 	"github.com/riomhaire/jrpcserver/model"
 	"github.com/riomhaire/jrpcserver/model/jrpcerror"
-	"github.com/riomhaire/jrpcserver/usecases"
+	"github.com/riomhaire/jrpcserver/usecases/defaultcommand"
 )
 
 // A simple example 'helloworld' program to show how use the framework
@@ -38,8 +38,8 @@ func main() {
 func Commands() []model.JRPCCommand {
 	commands := make([]model.JRPCCommand, 0)
 
-	commands = append(commands, model.JRPCCommand{"example.helloworld", HelloWorldCommand})
-	commands = append(commands, model.JRPCCommand{"system.commands", usecases.ListCommandsCommand})
+	commands = append(commands, model.JRPCCommand{"example.helloworld", HelloWorldCommand, false})
+	commands = append(commands, model.JRPCCommand{"system.commands", defaultcommand.ListCommandsCommand, false})
 	return commands
 }
 

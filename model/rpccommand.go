@@ -7,6 +7,7 @@ import (
 )
 
 type JRPCCommand struct {
-	Name    string
-	Command func(APIConfig, map[string]string, io.ReadCloser) (interface{}, jrpcerror.JrpcError)
+	Name        string
+	Command     func(APIConfig, map[string]string, io.ReadCloser) (interface{}, jrpcerror.JrpcError)
+	RawResponse bool // If true then response is just marshalled otherwise rpc format
 }

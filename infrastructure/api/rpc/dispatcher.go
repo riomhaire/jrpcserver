@@ -25,9 +25,11 @@ func (d *Dispatcher) Execute(method string, headers map[string]string, payload i
 			if err.Code != 0 {
 				response.Code = err.Code
 				response.Error = err.Error
+				response.RawResponse = cmd.RawResponse
 			} else {
 				response.Code = 0
 				response.Value = result
+				response.RawResponse = cmd.RawResponse
 			}
 		}
 	}
