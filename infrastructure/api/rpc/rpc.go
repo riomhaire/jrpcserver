@@ -3,12 +3,16 @@ package rpc
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/syslog"
 	"net/http"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
+
+	negronilogrus "github.com/meatballhat/negroni-logrus"
+	log "github.com/sirupsen/logrus"
+	lSyslog "github.com/sirupsen/logrus/hooks/syslog"
 
 	"github.com/riomhaire/jrpcserver/infrastructure/serviceregistry"
 	"github.com/riomhaire/jrpcserver/infrastructure/serviceregistry/consulagent"
@@ -52,10 +56,25 @@ func StartAPI(config model.APIConfig) {
 	router.HandleFunc("/health", healthHandler)
 
 	// Includes some default middlewares to all routes
-	negroni := negroni.Classic()
+	negroniServer := negroni.New()
+	negroniServer.Use(negroni.NewRecovery())
+
+	// add log
+	hook, err := lSyslog.NewSyslogHook("", "", syslog.LOG_INFO, "")
+	log.StandardLogger().SetFormatter(&log.TextFormatter{
+		DisableColors: true,
+		FullTimestamp: true,
+	})
+	//	log.StandardLogger().
+	if err == nil {
+		log.StandardLogger().Hooks.Add(hook)
+	}
+
+	negroniServer.Use(negronilogrus.NewMiddlewareFromLogger(log.StandardLogger(), config.ServiceName))
+
 	// Add some headers
-	negroni.UseFunc(AddWorkerHeader)  // Add which instance
-	negroni.UseFunc(AddWorkerVersion) // Which version
+	negroniServer.UseFunc(AddWorkerHeader)  // Add which instance
+	negroniServer.UseFunc(AddWorkerVersion) // Which version
 	// Coors stuff
 	handler := cors.New(
 		cors.Options{
@@ -64,10 +83,10 @@ func StartAPI(config model.APIConfig) {
 			AllowedHeaders:   []string{"*"},
 			AllowCredentials: true,
 		}).Handler(router) // Add coors
-	negroni.UseHandler(handler)
+	negroniServer.UseHandler(handler)
 
 	// Add Server Metrics
-	negroni.Use(negroniprometheus.NewMiddleware(config.ServiceName))
+	negroniServer.Use(negroniprometheus.NewMiddleware(config.ServiceName))
 
 	log.Println("Starting JSON RPC Server Version", config.Version, config.BaseURI, "on port:", config.Port)
 
@@ -85,7 +104,7 @@ func StartAPI(config model.APIConfig) {
 
 	// Register (if required with consul or other registry)
 	registryConnector.Register()
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", config.Port), negroni))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", config.Port), negroniServer))
 
 }
 

@@ -15,8 +15,6 @@
 package cmd
 
 import (
-	"strconv"
-
 	"github.com/riomhaire/jrpcserver/infrastructure/api/rpc"
 	"github.com/riomhaire/jrpcserver/model"
 	"github.com/riomhaire/jrpcserver/usecases"
@@ -24,21 +22,25 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var configPort int
+var configServicename string
+var configConsul string
+var configHost string
+
 // serveCmd represents the serve command
 var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Starts up a JSON RPC Service",
 	Run: func(cmd *cobra.Command, args []string) {
-		port, _ := strconv.Atoi(cmd.Flag("port").Value.String())
 
 		config := model.APIConfig{
 			ServiceName: cmd.Flag("servicename").Value.String(),
 			BaseURI:     "/api/v1/rpc",
-			Port:        port,
+			Port:        configPort,
 			Commands:    usecases.InitializeCommands(),
 			Version:     usecases.Version(),
-			Consul:      cmd.Flag("consul").Value.String(),
-			Hostname:    cmd.Flag("host").Value.String(),
+			Consul:      configConsul,
+			Hostname:    configHost,
 		}
 
 		rpc.StartAPI(config) // Wont return
@@ -47,16 +49,9 @@ var serveCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(serveCmd)
+	serveCmd.Flags().IntVarP(&configPort, "port", "p", 3000, "Port to run on")
+	serveCmd.Flags().StringVarP(&configServicename, "servicename", "s", "jrpcserver", "Name of service")
+	serveCmd.Flags().StringVarP(&configConsul, "consul", "c", "", "Consul host. Empty means dont use")
+	serveCmd.Flags().StringVarP(&configHost, "host", "b", "", "Interface/hostname to bind to")
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	rootCmd.PersistentFlags().IntP("port", "p", 3000, "Port to run on")
-	rootCmd.PersistentFlags().StringP("servicename", "s", "jrpcserver", "Name of service")
-	rootCmd.PersistentFlags().StringP("consul", "c", "", "Consul host. Empty means dont use")
-	rootCmd.PersistentFlags().StringP("host", "b", "", "Interface/hostname to bind to")
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// serveCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

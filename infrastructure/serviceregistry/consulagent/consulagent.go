@@ -3,6 +3,8 @@ package consulagent
 import (
 	"fmt"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/riomhaire/consul"
 )
 
@@ -39,7 +41,7 @@ func (a *ConsulServiceRegistry) Register() error {
 
 	a.consulClient, _ = consul.NewConsulClient(a.consulHost)
 	health := fmt.Sprintf("http://%v:%v%v", a.applicationHost, a.applicationPort, a.healthEndpoint)
-	fmt.Printf("Registering with Consul at %v with %v %v\n", a.consulHost, a.baseEndpoint, health)
+	log.Printf("Registering with Consul at %v with %v %v\n", a.consulHost, a.baseEndpoint, health)
 
 	a.consulClient.PeriodicRegister(id, a.name, a.applicationHost, a.applicationPort, a.baseEndpoint, health, 15)
 	return nil
@@ -50,7 +52,7 @@ func (a *ConsulServiceRegistry) Register() error {
 
  */
 func (a *ConsulServiceRegistry) Deregister() error {
-	fmt.Printf("De Registering %v with Consul at %v with %v \n", a.id, a.consulHost, a.baseEndpoint)
+	log.Printf("De Registering %v with Consul at %v with %v \n", a.id, a.consulHost, a.baseEndpoint)
 	a.consulClient.DeRegister(a.id)
 	return nil
 }

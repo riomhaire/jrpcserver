@@ -38,3 +38,11 @@ func ListCommandsCommand(config model.APIConfig, metadata map[string]string, pay
 	}
 	return names, jrpcerror.JrpcError{}
 }
+
+func VersionCommand(config model.APIConfig, metadata map[string]string, payload io.ReadCloser) (interface{}, jrpcerror.JrpcError) {
+	return config.Version, jrpcerror.JrpcError{}
+}
+
+func InfoCommand(config model.APIConfig, metadata map[string]string, payload io.ReadCloser) (interface{}, jrpcerror.JrpcError) {
+	return config, jrpcerror.JrpcError{}
+}
