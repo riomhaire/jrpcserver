@@ -10,20 +10,19 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/gorilla/mux"
 	negronilogrus "github.com/meatballhat/negroni-logrus"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/rs/cors"
 	log "github.com/sirupsen/logrus"
 	lSyslog "github.com/sirupsen/logrus/hooks/syslog"
+	"github.com/urfave/negroni"
+	negroniprometheus "github.com/zbindenren/negroni-prometheus"
 
 	"github.com/riomhaire/jrpcserver/infrastructure/serviceregistry"
 	"github.com/riomhaire/jrpcserver/infrastructure/serviceregistry/consulagent"
 	"github.com/riomhaire/jrpcserver/infrastructure/serviceregistry/none"
 	"github.com/riomhaire/jrpcserver/model"
-
-	"github.com/gorilla/mux"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/rs/cors"
-	"github.com/urfave/negroni"
-	negroniprometheus "github.com/zbindenren/negroni-prometheus"
 )
 
 var dispatcher *Dispatcher
@@ -50,6 +49,7 @@ func StartAPI(config model.APIConfig) {
 
 	// Define endpoint
 	router := mux.NewRouter()
+
 	// add middleware for a specific route and get params from route
 	router.HandleFunc(fmt.Sprintf("%s/{method}", config.BaseURI), rpcHandler)
 	router.Handle("/metrics", prometheus.Handler())
@@ -72,7 +72,12 @@ func StartAPI(config model.APIConfig) {
 
 	negroniServer.Use(negronilogrus.NewMiddlewareFromLogger(log.StandardLogger(), config.ServiceName))
 
-	// Add some headers
+	// If there are any handlers in the config add them
+	for _, handler := range config.Middleware {
+		negroniServer.Use(handler)
+	}
+
+	// Add some useful handlers Add some headers
 	negroniServer.UseFunc(AddWorkerHeader)  // Add which instance
 	negroniServer.UseFunc(AddWorkerVersion) // Which version
 	// Coors stuff
@@ -134,6 +139,7 @@ func rpcHandler(w http.ResponseWriter, r *http.Request) {
 		b, _ = json.MarshalIndent(dipatcherResponse, "", "  ")
 
 	}
+	// TODO Append schema type
 	w.Header().Set("Content-Type", "application/json")
 	if dipatcherResponse.Code == 0 {
 		w.WriteHeader(http.StatusOK)

@@ -46,3 +46,7 @@ func VersionCommand(config model.APIConfig, metadata map[string]string, payload 
 func InfoCommand(config model.APIConfig, metadata map[string]string, payload io.ReadCloser) (interface{}, jrpcerror.JrpcError) {
 	return config, jrpcerror.JrpcError{}
 }
+
+func HealthCommand(config model.APIConfig, metadata map[string]string, payload io.ReadCloser) (interface{}, jrpcerror.JrpcError) {
+	return "UP", jrpcerror.JrpcError{}
+}

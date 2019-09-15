@@ -18,6 +18,8 @@ func InitializeCommands() []model.JRPCCommand {
 	commands = append(commands, model.JRPCCommand{"system.version", defaultcommand.VersionCommand, false})
 	commands = append(commands, model.JRPCCommand{"system.info.raw", defaultcommand.InfoCommand, true})
 	commands = append(commands, model.JRPCCommand{"system.info", defaultcommand.InfoCommand, false})
+	commands = append(commands, model.JRPCCommand{"system.health.raw", defaultcommand.HealthCommand, true})
+	commands = append(commands, model.JRPCCommand{"system.health", defaultcommand.HealthCommand, false})
 	Commands = commands // needed for list
 	return commands
 }
