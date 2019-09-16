@@ -74,7 +74,7 @@ func StartAPI(config model.APIConfig) {
 
 	// If there are any handlers in the config add them
 	for _, handler := range config.Middleware {
-		negroniServer.Use(negroni.HandlerFunc(handler))
+		negroniServer.Use(handler)
 	}
 
 	// Add some useful handlers Add some headers

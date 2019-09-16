@@ -1,5 +1,5 @@
 package usecases
 
 func Version() string {
-	return "0.0.22"
+	return "0.0.24"
 }
