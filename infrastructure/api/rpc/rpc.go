@@ -72,14 +72,14 @@ func StartAPI(config model.APIConfig) {
 
 	negroniServer.Use(negronilogrus.NewMiddlewareFromLogger(log.StandardLogger(), config.ServiceName))
 
-	// If there are any handlers in the config add them
-	for _, handler := range config.Middleware {
-		negroniServer.Use(handler)
-	}
-
 	// Add some useful handlers Add some headers
 	negroniServer.UseFunc(AddWorkerHeader)  // Add which instance
 	negroniServer.UseFunc(AddWorkerVersion) // Which version
+	// If there are any handlers in the config add them
+	for _, handler := range config.Middleware {
+		negroniServer.UseFunc(handler)
+	}
+
 	// Coors stuff
 	handler := cors.New(
 		cors.Options{
