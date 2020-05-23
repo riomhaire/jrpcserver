@@ -33,16 +33,17 @@ var serveCmd = &cobra.Command{
 	Short: "Starts up a JSON RPC Service",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		config := model.APIConfig{
-			ServiceName: cmd.Flag("servicename").Value.String(),
-			BaseURI:     "/api/v1/rpc",
-			Port:        configPort,
-			Commands:    usecases.InitializeCommands(),
-			Version:     usecases.Version(),
-			Consul:      configConsul,
-			Hostname:    configHost,
+		config := model.DefaultConfiguration{
+			Server: model.ServerConfig{
+				ServiceName: cmd.Flag("servicename").Value.String(),
+				BaseURI:     "/api/v1/rpc",
+				Port:        configPort,
+				Commands:    usecases.InitializeCommands(),
+				Version:     usecases.Version(),
+				Consul:      configConsul,
+				Hostname:    configHost,
+			},
 		}
-
 		rpc.StartAPI(config) // Wont return
 	},
 }
