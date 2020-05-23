@@ -32,12 +32,14 @@ func main() {
 	port := flag.Int("port", 9999, "port to use")
 	flag.Parse()
 
-	config := model.APIConfig{
-		ServiceName: *name,
-		BaseURI:     *path,
-		Port:        *port,
-		Commands:    Commands(),
-		Consul:      *consulHost,
+	config := model.DefaultConfiguration{
+		Server: model.ServerConfig{
+			ServiceName: *name,
+			BaseURI:     *path,
+			Port:        *port,
+			Commands:    Commands(),
+			Consul:      *consulHost,
+		},
 	}
 	rpc.StartAPI(config) // Start service -  wont return
 }
@@ -50,7 +52,7 @@ func Commands() []model.JRPCCommand {
 	return commands
 }
 
-func HelloWorldCommand(config model.APIConfig, metadata map[string]string, payload io.ReadCloser) (interface{}, jrpcerror.JrpcError) {
+func HelloWorldCommand(config interface{}, metadata map[string]string, payload io.ReadCloser) (interface{}, jrpcerror.JrpcError) {
 	data, err := ioutil.ReadAll(payload)
 	if err != nil {
 		return "", jrpcerror.JrpcError{500, err.Error()}
@@ -61,6 +63,7 @@ func HelloWorldCommand(config model.APIConfig, metadata map[string]string, paylo
 		return response, jrpcerror.JrpcError{}
 	}
 }
+
 ```
 
 Hopefully this is fairly understandable (and is included within the examples/helloworld ). Essentially all you have to do is provide a list of functions and their command names and the library handles the rest.
