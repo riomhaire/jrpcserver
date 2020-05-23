@@ -22,26 +22,23 @@ import (
 	"github.com/riomhaire/jrpcserver/infrastructure/serviceregistry"
 	"github.com/riomhaire/jrpcserver/infrastructure/serviceregistry/consulagent"
 	"github.com/riomhaire/jrpcserver/infrastructure/serviceregistry/none"
-	"github.com/riomhaire/jrpcserver/model"
 )
 
 var dispatcher *Dispatcher
-var apiconfig *model.APIConfig
 
-func StartAPI(config model.APIConfig) {
+func StartAPI(config interface{}) {
 	// Create dispatcher for later use
 	dispatcher = NewDispatcher(config)
-	consulEnabled := len(config.Consul) != 0
-	if len(config.Hostname) == 0 {
+	consulEnabled := len(dispatcher.serverConfig.Consul) != 0
+	if len(dispatcher.serverConfig.Hostname) == 0 {
 		n, _ := os.Hostname()
-		config.Hostname = n
+		dispatcher.serverConfig.Hostname = n
 	}
-	apiconfig = &config
 
 	// Set up registry
 	var registryConnector serviceregistry.ServiceRegistry // Default to none
 	if consulEnabled {
-		registryConnector = consulagent.NewConsulServiceRegistry(config.Consul, config.ServiceName, config.Hostname, config.Port, config.BaseURI, "/health")
+		registryConnector = consulagent.NewConsulServiceRegistry(dispatcher.serverConfig.Consul, dispatcher.serverConfig.ServiceName, dispatcher.serverConfig.Hostname, dispatcher.serverConfig.Port, dispatcher.serverConfig.BaseURI, "/health")
 	} else {
 		registryConnector = none.NewDefaultServiceRegistry() // Default to none
 
@@ -51,7 +48,7 @@ func StartAPI(config model.APIConfig) {
 	router := mux.NewRouter()
 
 	// add middleware for a specific route and get params from route
-	router.HandleFunc(fmt.Sprintf("%s/{method}", config.BaseURI), rpcHandler)
+	router.HandleFunc(fmt.Sprintf("%s/{method}", dispatcher.serverConfig.BaseURI), rpcHandler)
 	router.Handle("/metrics", prometheus.Handler())
 	router.HandleFunc("/health", healthHandler)
 
@@ -70,13 +67,13 @@ func StartAPI(config model.APIConfig) {
 		log.StandardLogger().Hooks.Add(hook)
 	}
 
-	negroniServer.Use(negronilogrus.NewMiddlewareFromLogger(log.StandardLogger(), config.ServiceName))
+	negroniServer.Use(negronilogrus.NewMiddlewareFromLogger(log.StandardLogger(), dispatcher.serverConfig.ServiceName))
 
 	// Add some useful handlers Add some headers
 	negroniServer.UseFunc(AddWorkerHeader)  // Add which instance
 	negroniServer.UseFunc(AddWorkerVersion) // Which version
 	// If there are any handlers in the config add them
-	for _, handler := range config.Middleware {
+	for _, handler := range dispatcher.serverConfig.Middleware {
 		negroniServer.UseFunc(handler)
 	}
 
@@ -91,9 +88,9 @@ func StartAPI(config model.APIConfig) {
 	negroniServer.UseHandler(handler)
 
 	// Add Server Metrics
-	negroniServer.Use(negroniprometheus.NewMiddleware(config.ServiceName))
+	negroniServer.Use(negroniprometheus.NewMiddleware(dispatcher.serverConfig.ServiceName))
 
-	log.Println("Starting JSON RPC Server Version", config.Version, config.BaseURI, "on port:", config.Port)
+	log.Println("Starting JSON RPC Server Version", dispatcher.serverConfig.Version, dispatcher.serverConfig.BaseURI, "on port:", dispatcher.serverConfig.Port)
 
 	// Set up shutdown resister
 	c := make(chan os.Signal, 2)
@@ -109,7 +106,7 @@ func StartAPI(config model.APIConfig) {
 
 	// Register (if required with consul or other registry)
 	registryConnector.Register()
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", config.Port), negroniServer))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", dispatcher.serverConfig.Port), negroniServer))
 
 }
 
@@ -173,10 +170,10 @@ func AddWorkerHeader(rw http.ResponseWriter, req *http.Request, next http.Handle
 
 // AddWorkerVersion - adds header of which version is installed
 func AddWorkerVersion(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
-	if len(apiconfig.Version) == 0 {
-		apiconfig.Version = "UNKNOWN"
+	if len(dispatcher.serverConfig.Version) == 0 {
+		dispatcher.serverConfig.Version = "UNKNOWN"
 	}
-	rw.Header().Add("X-Worker-Version", apiconfig.Version)
+	rw.Header().Add("X-Worker-Version", dispatcher.serverConfig.Version)
 	if next != nil {
 		next(rw, req)
 	}

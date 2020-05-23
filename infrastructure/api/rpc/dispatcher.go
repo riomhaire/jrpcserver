@@ -7,18 +7,27 @@ import (
 )
 
 type Dispatcher struct {
-	config model.APIConfig
+	config       interface{}
+	serverConfig *model.ServerConfig
 }
 
-func NewDispatcher(config model.APIConfig) *Dispatcher {
-	return &Dispatcher{config}
+func NewDispatcher(config interface{}) *Dispatcher {
+	var dispatcher Dispatcher
+	serverConfigAccessor, ok := config.(model.ServerConfigReader)
+
+	if ok {
+		server, _ := serverConfigAccessor.ReadServerConfig()
+		dispatcher.serverConfig = server
+	}
+	dispatcher.config = config
+	return &dispatcher
 
 }
 
 func (d *Dispatcher) Execute(method string, headers map[string]string, payload io.ReadCloser) *model.RPCCommandResponse {
 	response := model.RPCCommandResponse{}
 	found := false
-	for _, cmd := range d.config.Commands {
+	for _, cmd := range d.serverConfig.Commands {
 		if cmd.Name == method {
 			found = true
 			result, err := cmd.Command(d.config, headers, payload)
