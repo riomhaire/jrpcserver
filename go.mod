@@ -1,4 +1,4 @@
-module github.com/riomhaire
+module github.com/riomhaire/jrpcserver
 
 go 1.21.5
 
@@ -7,7 +7,6 @@ require (
 	github.com/meatballhat/negroni-logrus v1.1.1
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/riomhaire/consul v0.0.0-20180616102840-15d83fa6d6e6
-	github.com/riomhaire/jrpcserver v0.0.0-20200523195158-6bb9e7d55707
 	github.com/rs/cors v1.10.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.0
