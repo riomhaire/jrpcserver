@@ -12,7 +12,6 @@ import (
 
 	"github.com/gorilla/mux"
 	negronilogrus "github.com/meatballhat/negroni-logrus"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/cors"
 	log "github.com/sirupsen/logrus"
 	lSyslog "github.com/sirupsen/logrus/hooks/syslog"
@@ -49,7 +48,6 @@ func StartAPI(config interface{}) {
 
 	// add middleware for a specific route and get params from route
 	router.HandleFunc(fmt.Sprintf("%s/{method}", dispatcher.serverConfig.BaseURI), rpcHandler)
-	router.Handle("/metrics", prometheus.Handler())
 	router.HandleFunc("/health", healthHandler)
 
 	// Includes some default middlewares to all routes
